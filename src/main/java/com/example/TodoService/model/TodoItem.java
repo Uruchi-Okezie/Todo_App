@@ -21,7 +21,9 @@ public class TodoItem {
 
     private String title;
     private String description;
+    @Temporal(TemporalType.DATE)
     private Date dueDate;
-    private String priority;
+    @Enumerated(EnumType.STRING)
+    private Priority priority;
     private boolean completed = false;
 }

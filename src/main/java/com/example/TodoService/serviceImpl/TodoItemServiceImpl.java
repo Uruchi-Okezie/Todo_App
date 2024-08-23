@@ -1,11 +1,12 @@
 package com.example.TodoService.serviceImpl;
 
+
 import com.example.TodoService.dto.TodoItemDto;
+import com.example.TodoService.exception.TodoItemNotFoundException;
 import com.example.TodoService.model.TodoItem;
 import com.example.TodoService.repository.TodoItemRepository;
 import com.example.TodoService.service.TodoItemService;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -34,37 +35,41 @@ public class TodoItemServiceImpl implements TodoItemService {
     @Override
     public List<TodoItemDto> getAllTodoItems(String priority, LocalDate dueDate) {
         List<TodoItem> items = todoItemRepository.findAll();
+
         return items.stream()
-                .filter(item -> (priority == null || item.getPriority().equalsIgnoreCase(priority)))
-                .filter(item -> (dueDate == null || item.getDueDate().equals(dueDate)))
-                .sorted(Comparator.comparing(TodoItem::getDueDate)) // Example sorting by due date
+                .filter(item -> priority == null || item.getPriority().name().equalsIgnoreCase(priority))
+                .filter(item -> dueDate == null || item.getDueDate().equals(dueDate))
+                .sorted(Comparator.comparing(TodoItem::getDueDate))
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
     }
 
-
     @Override
     public TodoItemDto getTodoItemById(Long id) {
         TodoItem todoItem = todoItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Todo Item not found with ID: " + id));
+                .orElseThrow(() -> new TodoItemNotFoundException("Todo Item not found with ID: " + id));
         return convertToDto(todoItem);
     }
 
     @Override
     public TodoItemDto updateTodoItem(Long id, TodoItemDto todoItemDto) {
         TodoItem existingTodoItem = todoItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Todo Item not found with ID: " + id));
+                .orElseThrow(() -> new TodoItemNotFoundException("Todo Item not found with ID: " + id));
         existingTodoItem.setTitle(todoItemDto.getTitle());
         existingTodoItem.setDescription(todoItemDto.getDescription());
         existingTodoItem.setDueDate(todoItemDto.getDueDate());
         existingTodoItem.setPriority(todoItemDto.getPriority());
         existingTodoItem.setCompleted(todoItemDto.isCompleted());
+
         TodoItem updatedTodoItem = todoItemRepository.save(existingTodoItem);
         return convertToDto(updatedTodoItem);
     }
 
     @Override
     public void deleteTodoItem(Long id) {
+        if (!todoItemRepository.existsById(id)) {
+            throw new TodoItemNotFoundException("Todo Item not found with ID: " + id);
+        }
         todoItemRepository.deleteById(id);
     }
 
