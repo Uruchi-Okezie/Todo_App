@@ -15,21 +15,18 @@ import java.util.List;
 @RequestMapping("/api/todos")
 @AllArgsConstructor
 public class TodoItemController {
-
     private final TodoItemService todoItemService;
 
     @PostMapping
     public ResponseEntity<TodoItemDto> createTodoItem(@RequestBody TodoItemDto todoItemDto) {
-        TodoItemDto createdTodoItem = todoItemService.createTodoItem(todoItemDto);
-        return new ResponseEntity<>(createdTodoItem, HttpStatus.CREATED);
+        return new ResponseEntity<>(todoItemService.createTodoItem(todoItemDto), HttpStatus.CREATED);
     }
 
     @GetMapping
     public ResponseEntity<List<TodoItemDto>> getAllTodoItems(
             @RequestParam(required = false) String priority,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dueDate) {
-        List<TodoItemDto> items = todoItemService.getAllTodoItems(priority, dueDate);
-        return ResponseEntity.ok(items);
+        return ResponseEntity.ok(todoItemService.getAllTodoItems(priority, dueDate));
     }
 
     @GetMapping("/{id}")
