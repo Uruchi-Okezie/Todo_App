@@ -1,6 +1,8 @@
 package com.example.TodoService.serviceImpl;
 
 import com.example.TodoService.dto.TodoItemDto;
+import com.example.TodoService.exception.InvalidTodoItemException;
+import com.example.TodoService.exception.TodoItemNotFoundException;
 import com.example.TodoService.model.TodoItem;
 import com.example.TodoService.repository.TodoItemRepository;
 import com.example.TodoService.service.TodoItemService;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,6 +23,7 @@ public class TodoItemServiceImpl implements TodoItemService {
 
     @Override
     public TodoItemDto createTodoItem(TodoItemDto todoItemDto) {
+        validateTodoItemDto(todoItemDto);
         TodoItem todoItem = convertToEntity(todoItemDto);
         TodoItem savedItem = todoItemRepository.save(todoItem);
         return convertToDto(savedItem);
@@ -44,6 +48,7 @@ public class TodoItemServiceImpl implements TodoItemService {
 
     @Override
     public TodoItemDto updateTodoItem(Long id, TodoItemDto todoItemDto) {
+        validateTodoItemDto(todoItemDto);
         TodoItem existingTodoItem = findTodoItemById(id);
         updateTodoItemFields(existingTodoItem, todoItemDto);
         TodoItem updatedTodoItem = todoItemRepository.save(existingTodoItem);
@@ -58,7 +63,7 @@ public class TodoItemServiceImpl implements TodoItemService {
 
     private TodoItem findTodoItemById(Long id) {
         return todoItemRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Todo Item not found with ID: " + id));
+                .orElseThrow(() -> new TodoItemNotFoundException("Todo Item not found with ID: " + id));
     }
 
     private boolean isPriorityMatch(TodoItem item, String priority) {
@@ -96,5 +101,15 @@ public class TodoItemServiceImpl implements TodoItemService {
                 .priority(todoItemDto.getPriority())
                 .completed(todoItemDto.isCompleted())
                 .build();
+    }
+
+    private void validateTodoItemDto(TodoItemDto todoItemDto) {
+        if (todoItemDto.getTitle() == null || todoItemDto.getTitle().trim().isEmpty()) {
+            throw new InvalidTodoItemException("Todo item title cannot be empty");
+        }
+        if (todoItemDto.getDueDate() != null && todoItemDto.getDueDate().isBefore(LocalDate.now())) {
+            throw new InvalidTodoItemException("Due date cannot be in the past");
+        }
+
     }
 }
