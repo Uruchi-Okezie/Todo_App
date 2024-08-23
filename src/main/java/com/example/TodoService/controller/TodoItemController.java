@@ -25,9 +25,12 @@ public class TodoItemController {
     @GetMapping
     public ResponseEntity<List<TodoItemDto>> getAllTodoItems(
             @RequestParam(required = false) String priority,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dueDate) {
-        return ResponseEntity.ok(todoItemService.getAllTodoItems(priority, dueDate));
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate dueDate,
+            @RequestParam(required = false) String sortBy) {
+        List<TodoItemDto> filteredItems = todoItemService.getAllTodoItems(priority, dueDate, sortBy);
+        return ResponseEntity.ok(filteredItems);
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<TodoItemDto> getTodoItemById(@PathVariable Long id) {

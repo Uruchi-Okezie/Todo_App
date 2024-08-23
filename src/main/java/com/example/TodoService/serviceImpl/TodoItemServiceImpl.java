@@ -7,12 +7,10 @@ import com.example.TodoService.model.TodoItem;
 import com.example.TodoService.repository.TodoItemRepository;
 import com.example.TodoService.service.TodoItemService;
 import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,14 +28,32 @@ public class TodoItemServiceImpl implements TodoItemService {
     }
 
     @Override
-    public List<TodoItemDto> getAllTodoItems(String priority, LocalDate dueDate) {
+    public List<TodoItemDto> getAllTodoItems(String priority, LocalDate dueDate, String sortBy) {
         List<TodoItem> items = todoItemRepository.findAll();
+
         return items.stream()
-                .filter(item -> isPriorityMatch(item, priority))
-                .filter(item -> isDueDateMatch(item, dueDate))
-                .sorted(Comparator.comparing(TodoItem::getDueDate))
+                .filter(item -> priority == null || item.getPriority().equalsIgnoreCase(priority))
+                .filter(item -> dueDate == null || item.getDueDate().equals(dueDate))
+                .sorted(getComparator(sortBy))
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
+    }
+
+    private Comparator<TodoItem> getComparator(String sortBy) {
+        if (sortBy == null || sortBy.isEmpty()) {
+            return Comparator.comparing(TodoItem::getDueDate);
+        }
+
+        switch (sortBy.toLowerCase()) {
+            case "priority":
+                return Comparator.comparing(TodoItem::getPriority);
+            case "duedate":
+                return Comparator.comparing(TodoItem::getDueDate);
+            case "title":
+                return Comparator.comparing(TodoItem::getTitle);
+            default:
+                throw new InvalidTodoItemException("Invalid sort criteria: " + sortBy);
+        }
     }
 
     @Override
@@ -57,21 +73,15 @@ public class TodoItemServiceImpl implements TodoItemService {
 
     @Override
     public void deleteTodoItem(Long id) {
-        findTodoItemById(id); // Ensures the item exists
+        if (!todoItemRepository.existsById(id)) {
+            throw new TodoItemNotFoundException("Todo Item not found with ID: " + id);
+        }
         todoItemRepository.deleteById(id);
     }
 
     private TodoItem findTodoItemById(Long id) {
         return todoItemRepository.findById(id)
                 .orElseThrow(() -> new TodoItemNotFoundException("Todo Item not found with ID: " + id));
-    }
-
-    private boolean isPriorityMatch(TodoItem item, String priority) {
-        return priority == null || item.getPriority().equalsIgnoreCase(priority);
-    }
-
-    private boolean isDueDateMatch(TodoItem item, LocalDate dueDate) {
-        return dueDate == null || item.getDueDate().equals(dueDate);
     }
 
     private void updateTodoItemFields(TodoItem existingTodoItem, TodoItemDto todoItemDto) {
@@ -110,6 +120,6 @@ public class TodoItemServiceImpl implements TodoItemService {
         if (todoItemDto.getDueDate() != null && todoItemDto.getDueDate().isBefore(LocalDate.now())) {
             throw new InvalidTodoItemException("Due date cannot be in the past");
         }
-
     }
 }
+

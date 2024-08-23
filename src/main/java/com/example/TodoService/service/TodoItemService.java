@@ -7,10 +7,15 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface TodoItemService {
+
     TodoItemDto createTodoItem(TodoItemDto todoItemDto);
+
+    List<TodoItemDto> getAllTodoItems(String priority, LocalDate dueDate, String sortBy);
+
     TodoItemDto getTodoItemById(Long id);
-    List<TodoItemDto> getAllTodoItems(String priority, LocalDate dueDate);
 
     TodoItemDto updateTodoItem(Long id, TodoItemDto todoItemDto);
+
     void deleteTodoItem(Long id);
 }
+

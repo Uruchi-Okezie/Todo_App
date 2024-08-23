@@ -35,22 +35,9 @@ class TodoItemControllerTest {
 
     @Test
     void testCreateTodoItem() {
-        TodoItemDto inputDto = TodoItemDto.builder()
-                .title("Test Todo")
-                .description("Test Description")
-                .dueDate(LocalDate.now().plusDays(1))
-                .priority("HIGH")
-                .completed(false)
-                .build();
+        TodoItemDto inputDto = TodoItemDto.builder().title("Test Todo").description("Test Description").dueDate(LocalDate.now().plusDays(1)).priority("HIGH").completed(false).build();
 
-        TodoItemDto outputDto = TodoItemDto.builder()
-                .id(1L)
-                .title("Test Todo")
-                .description("Test Description")
-                .dueDate(LocalDate.now().plusDays(1))
-                .priority("HIGH")
-                .completed(false)
-                .build();
+        TodoItemDto outputDto = TodoItemDto.builder().id(1L).title("Test Todo").description("Test Description").dueDate(LocalDate.now().plusDays(1)).priority("HIGH").completed(false).build();
 
         when(todoItemService.createTodoItem(inputDto)).thenReturn(outputDto);
 
@@ -65,32 +52,23 @@ class TodoItemControllerTest {
     void testGetAllTodoItems() {
         String priority = "HIGH";
         LocalDate dueDate = LocalDate.now();
+        String sortBy = "dueDate";
 
-        List<TodoItemDto> todoItems = Arrays.asList(
-                TodoItemDto.builder().id(1L).title("Todo 1").priority("HIGH").dueDate(LocalDate.now()).build(),
-                TodoItemDto.builder().id(2L).title("Todo 2").priority("HIGH").dueDate(LocalDate.now()).build()
-        );
+        List<TodoItemDto> todoItems = Arrays.asList(TodoItemDto.builder().id(1L).title("Todo 1").priority("HIGH").dueDate(LocalDate.now()).build(), TodoItemDto.builder().id(2L).title("Todo 2").priority("HIGH").dueDate(LocalDate.now()).build());
 
-        when(todoItemService.getAllTodoItems(priority, dueDate)).thenReturn(todoItems);
+        when(todoItemService.getAllTodoItems(priority, dueDate, sortBy)).thenReturn(todoItems);
 
-        ResponseEntity<List<TodoItemDto>> response = todoItemController.getAllTodoItems(priority, dueDate);
+        ResponseEntity<List<TodoItemDto>> response = todoItemController.getAllTodoItems(priority, dueDate, sortBy);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertEquals(todoItems, response.getBody());
-        verify(todoItemService, times(1)).getAllTodoItems(priority, dueDate);
+        verify(todoItemService, times(1)).getAllTodoItems(priority, dueDate, sortBy);
     }
 
     @Test
     void testGetTodoItemById() {
         Long id = 1L;
-        TodoItemDto todoItem = TodoItemDto.builder()
-                .id(id)
-                .title("Test Todo")
-                .description("Test Description")
-                .dueDate(LocalDate.now())
-                .priority("HIGH")
-                .completed(false)
-                .build();
+        TodoItemDto todoItem = TodoItemDto.builder().id(id).title("Test Todo").description("Test Description").dueDate(LocalDate.now()).priority("HIGH").completed(false).build();
 
         when(todoItemService.getTodoItemById(id)).thenReturn(todoItem);
 
@@ -104,22 +82,9 @@ class TodoItemControllerTest {
     @Test
     void testUpdateTodoItem() {
         Long id = 1L;
-        TodoItemDto inputDto = TodoItemDto.builder()
-                .title("Updated Todo")
-                .description("Updated Description")
-                .dueDate(LocalDate.now().plusDays(2))
-                .priority("LOW")
-                .completed(true)
-                .build();
+        TodoItemDto inputDto = TodoItemDto.builder().title("Updated Todo").description("Updated Description").dueDate(LocalDate.now().plusDays(2)).priority("LOW").completed(true).build();
 
-        TodoItemDto outputDto = TodoItemDto.builder()
-                .id(id)
-                .title("Updated Todo")
-                .description("Updated Description")
-                .dueDate(LocalDate.now().plusDays(2))
-                .priority("LOW")
-                .completed(true)
-                .build();
+        TodoItemDto outputDto = TodoItemDto.builder().id(id).title("Updated Todo").description("Updated Description").dueDate(LocalDate.now().plusDays(2)).priority("LOW").completed(true).build();
 
         when(todoItemService.updateTodoItem(id, inputDto)).thenReturn(outputDto);
 
@@ -139,11 +104,11 @@ class TodoItemControllerTest {
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
         verify(todoItemService, times(1)).deleteTodoItem(id);
     }
+
     @Test
     void testCreateTodoItem_WithInvalidData() {
-        TodoItemDto inputDto = TodoItemDto.builder()
-                .title("")  // Invalid: empty title
-                .dueDate(LocalDate.now().minusDays(1))  // Invalid: past due date
+        TodoItemDto inputDto = TodoItemDto.builder().title("")
+                .dueDate(LocalDate.now().minusDays(1))
                 .build();
 
         when(todoItemService.createTodoItem(inputDto)).thenThrow(new InvalidTodoItemException("Invalid todo item data"));
@@ -164,13 +129,7 @@ class TodoItemControllerTest {
     @Test
     void testUpdateTodoItem_NonExistent() {
         Long id = 999L;
-        TodoItemDto inputDto = TodoItemDto.builder()
-                .title("Updated Todo")
-                .description("Updated Description")
-                .dueDate(LocalDate.now().plusDays(2))
-                .priority("LOW")
-                .completed(true)
-                .build();
+        TodoItemDto inputDto = TodoItemDto.builder().title("Updated Todo").description("Updated Description").dueDate(LocalDate.now().plusDays(2)).priority("LOW").completed(true).build();
 
         when(todoItemService.updateTodoItem(id, inputDto)).thenThrow(new TodoItemNotFoundException("Todo item not found"));
 
@@ -191,25 +150,27 @@ class TodoItemControllerTest {
     void testGetAllTodoItems_WithInvalidPriority() {
         String invalidPriority = "INVALID_PRIORITY";
         LocalDate dueDate = LocalDate.now();
+        String sortBy = "dueDate";
 
-        when(todoItemService.getAllTodoItems(invalidPriority, dueDate)).thenThrow(new InvalidTodoItemException("Invalid priority"));
+        when(todoItemService.getAllTodoItems(invalidPriority, dueDate, sortBy)).thenThrow(new InvalidTodoItemException("Invalid priority"));
 
-        assertThrows(InvalidTodoItemException.class, () -> todoItemController.getAllTodoItems(invalidPriority, dueDate));
-        verify(todoItemService, times(1)).getAllTodoItems(invalidPriority, dueDate);
+        assertThrows(InvalidTodoItemException.class, () -> todoItemController.getAllTodoItems(invalidPriority, dueDate, sortBy));
+        verify(todoItemService, times(1)).getAllTodoItems(invalidPriority, dueDate, sortBy);
     }
 
     @Test
     void testGetAllTodoItems_WithFutureDueDate() {
         String priority = "HIGH";
         LocalDate futureDate = LocalDate.now().plusYears(100);  // Edge case: very far future date
+        String sortBy = "dueDate";
 
         List<TodoItemDto> emptyList = Arrays.asList();
-        when(todoItemService.getAllTodoItems(priority, futureDate)).thenReturn(emptyList);
+        when(todoItemService.getAllTodoItems(priority, futureDate, sortBy)).thenReturn(emptyList);
 
-        ResponseEntity<List<TodoItemDto>> response = todoItemController.getAllTodoItems(priority, futureDate);
+        ResponseEntity<List<TodoItemDto>> response = todoItemController.getAllTodoItems(priority, futureDate, sortBy);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         assertTrue(response.getBody().isEmpty());
-        verify(todoItemService, times(1)).getAllTodoItems(priority, futureDate);
+        verify(todoItemService, times(1)).getAllTodoItems(priority, futureDate, sortBy);
     }
 }
